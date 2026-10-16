@@ -1,0 +1,56 @@
+# ---- Dependências ----
+node_modules/
+.pnp
+.pnp.js
+__pycache__/
+.venv/
+venv/
+vendor/
+
+# ---- Build e saídas ----
+dist/
+build/
+out/
+*.tsbuildinfo
+.next/
+.nuxt/
+.turbo/
+.cache/
+
+# ---- Variáveis de ambiente e segredos ----
+.env
+.env.*
+!.env.example
+
+# ---- Cobertura de testes ----
+coverage/
+*.lcov
+.pytest_cache/
+htmlcov/
+
+# ---- Bancos de dados locais / arquivos de dados ----
+*.sqlite
+*.sqlite3
+*.db
+
+# ---- Editores e IDEs ----
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# ---- Sistema operacional ----
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+$RECYCLE.BIN/
+
+# ---- Logs e temporários ----
+*.log
+logs/
+tmp/
+temp/
+*.pid
+*.seed
