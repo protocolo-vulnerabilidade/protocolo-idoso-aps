@@ -2,7 +2,7 @@
 
 Ferramenta web de **avaliação assistida da vulnerabilidade clínico-funcional e sociofamiliar da pessoa idosa** na Atenção Primária à Saúde (APS): aplicação dos instrumentos **IVCF-20** e **EASFI-BR** com cálculo automático da **Matriz Integrada de Vulnerabilidade (MIV-CFS)**.
 
-> **Status: fase de setup** — este repositório está em estruturação. Ainda não há código de aplicação; a stack do frontend e do backend será definida e registrada em ADR (ver [docs/arquitetura.md](docs/arquitetura.md)).
+> **Status: fase de setup** — documentação e decisões arquiteturais concluídas; implementação a iniciar. Stacks definidas em ADRs: frontend **React + Vite + TypeScript + Tailwind + shadcn/ui** · backend **Go + pgx** · banco **PostgreSQL** (dev local / Supabase em produção). Ver [docs/arquitetura.md](docs/arquitetura.md).
 
 ## Sobre o projeto
 
@@ -40,11 +40,11 @@ protocolo-idoso-aps/
 ├── docs/                   # Documentação formal
 │   ├── index.md            # Hub de navegação da documentação
 │   ├── visao-geral.md      # Escopo do sistema baseado no protocolo
-│   ├── arquitetura.md      # Decisões arquiteturais de alto nível
-│   └── decisoes/           # Registro de decisões (ADRs)
+│   ├── arquitetura.md      # Decisões arquiteturais e stacks
+│   └── decisoes/           # Registro de decisões (ADRs 0001–0005)
 └── apps/
-    ├── frontend/           # Aplicação web (stack a definir)
-    └── backend/            # API, regras de negócio e persistência (stack a definir)
+    ├── frontend/           # React + Vite + TypeScript + Tailwind + shadcn/ui
+    └── backend/            # Go + pgx · API JSON REST
 ```
 
 ## Documentação
@@ -52,7 +52,7 @@ protocolo-idoso-aps/
 | Documento | Quando ler |
 |---|---|
 | [docs/visao-geral.md](docs/visao-geral.md) | Entender o domínio, o escopo e os requisitos do sistema |
-| [docs/arquitetura.md](docs/arquitetura.md) | Entender a estrutura do monorepo e decisões técnicas |
+| [docs/arquitetura.md](docs/arquitetura.md) | Entender a estrutura do monorepo, stacks e decisões técnicas |
 | [docs/decisoes/](docs/decisoes/) | Histórico de decisões arquiteturais (ADRs) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribuir com o projeto |
 

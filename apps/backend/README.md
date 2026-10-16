@@ -9,12 +9,20 @@ API e núcleo de domínio do **Protocolo Idoso APS** — regras de estratificaç
 - **Eliminação**: operações de exclusão individual e total do histórico como parte nuclear da API
 - **Logs sem conteúdo clínico**: a infraestrutura não registra respostas, escores ou resultados
 
+## Stack
+
+**Definida em [ADR-0004](../../docs/decisoes/ADR-0004-stack-backend.md)**: Go + API JSON REST + pgx com SQL explícito (sem ORM). Framework HTTP a decidir na implementação.
+
+**Banco ([ADR-0005](../../docs/decisoes/ADR-0005-banco-postgresql-supabase.md))**: PostgreSQL — desenvolvimento local (container) e produção no Supabase (apenas Postgres gerenciado, via connection string).
+
 ## Status
 
-**Pendente de implementação.** A stack (incluindo banco de dados) será definida e registrada em ADR (`docs/decisoes/`).
+**Pendente de implementação.**
 
 ## Documentação
 
 - [Visão geral do sistema](../../docs/visao-geral.md)
 - [Arquitetura](../../docs/arquitetura.md)
 - [ADR-0002 — Avaliação assistida anônima](../../docs/decisoes/ADR-0002-avaliacao-assistida-anonima.md)
+- [ADR-0004 — Stack do backend](../../docs/decisoes/ADR-0004-stack-backend.md)
+- [ADR-0005 — Banco PostgreSQL/Supabase](../../docs/decisoes/ADR-0005-banco-postgresql-supabase.md)

@@ -11,12 +11,17 @@ Interface web do **Protocolo Idoso APS** — formulário assistido de avaliaçã
 - Mantém o **identificador anônimo de dispositivo** no navegador (sem contas de usuário)
 - Consome a **API do backend** — não implementa regras de estratificação
 
+## Stack
+
+**Definida em [ADR-0003](../../docs/decisoes/ADR-0003-stack-frontend.md)**: React + Vite + TypeScript (estrito) + Tailwind CSS + shadcn/ui.
+
 ## Status
 
-**Pendente de implementação.** A stack será definida e registrada em ADR (`docs/decisoes/`).
+**Pendente de implementação.**
 
 ## Documentação
 
 - [Visão geral do sistema](../../docs/visao-geral.md)
 - [Arquitetura](../../docs/arquitetura.md)
 - [ADR-0002 — Avaliação assistida anônima](../../docs/decisoes/ADR-0002-avaliacao-assistida-anonima.md)
+- [ADR-0003 — Stack do frontend](../../docs/decisoes/ADR-0003-stack-frontend.md)

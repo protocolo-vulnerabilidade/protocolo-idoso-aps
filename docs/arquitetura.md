@@ -7,14 +7,15 @@ Decisões arquiteturais de alto nível do monorepo **Protocolo Idoso APS**. Deci
 Sistema web cliente-servidor com fronteira clara entre apresentação (frontend) e regras de negócio/persistência (backend):
 
 ```
-┌──────────────┐         ┌──────────────┐         ┌────────────┐
-│  frontend    │  HTTP   │   backend    │         │  banco de  │
-│  (apps/      │ ──────► │   (apps/     │ ──────► │   dados    │
-│   frontend)  │  API    │   backend)   │         └────────────┘
-└──────────────┘         └──────────────┘
+┌───────────────────────┐          ┌─────────────────────┐         ┌──────────────────────────┐
+│  apps/frontend        │   HTTP   │  apps/backend       │         │  Banco de dados          │
+│  React + Vite + TS    │ ───────► │  Go (API JSON REST) │ ──────► │  PostgreSQL              │
+│  Tailwind + shadcn/ui │          │  pgx + SQL explícito│         │  dev: local · prod:      │
+│                       │          │                     │         │  Supabase (gerenciado)   │
+└───────────────────────┘          └─────────────────────┘         └──────────────────────────┘
 ```
 
-- **Regras de domínio centrais** (cálculo dos escores IVCF-20/EASFI-BR, matriz MIV-CFS, marcadores sentinela, reclassificação de nível, geração do resumo copiável) pertencem ao **backend**. O frontend coleta, exibe e transfere — nunca recalcula sozinho o que define prioridade assistencial.
+- **Regras de domínio centrais** (cálculo dos escores IVCF-20/EASFI-BR, matriz MIV-CFS, marcadores sentinela, reclassificação de nível, geração do resumo copiável) pertencem ao **backend**, em pacotes puros testáveis. O frontend coleta, exibe e transfere — nunca recalcula sozinho o que define prioridade assistencial.
 - **Persistência**: o backend armazena **rascunhos** e **histórico de avaliações** — todos **sem identificação da pessoa idosa**, vinculados a um identificador anônimo de dispositivo ([ADR-0002](decisoes/ADR-0002-avaliacao-assistida-anonima.md)).
 
 ## Estrutura do monorepo
@@ -27,9 +28,16 @@ Sistema web cliente-servidor com fronteira clara entre apresentação (frontend)
 
 ## Stack tecnológica
 
-**A definir.** A escolha de linguagens, frameworks, banco de dados e ferramentas de cada app será registrada em ADRs dedicados (p.ex. `ADR-0003-stack-frontend.md`, `ADR-0004-stack-backend.md`), contemplando: maturidade, manutenabilidade, adequação ao contexto de saúde e produtividade de uma equipe pequena.
+| Camada | Stack | Registro |
+|---|---|---|
+| Frontend | React + Vite + TypeScript (estrito) + Tailwind CSS + shadcn/ui | [ADR-0003](decisoes/ADR-0003-stack-frontend.md) |
+| Backend | Go + API JSON REST + pgx com SQL explícito | [ADR-0004](decisoes/ADR-0004-stack-backend.md) |
+| Banco | PostgreSQL — dev local (container) · produção no Supabase (apenas Postgres gerenciado) | [ADR-0005](decisoes/ADR-0005-banco-postgresql-supabase.md) |
+| Domínio | Regras MIV-CFS em pacotes Go puros, testáveis contra os casos do protocolo | ADR-0004 |
 
-Decisões já tomadas:
+**Ponto aberto**: framework/roteador HTTP do backend (Gin/Echo/chi) — a decidir na implementação e registrar em ADR próprio.
+
+Demais decisões institucionais:
 
 | Tema | Decisão | Registro |
 |---|---|---|
@@ -37,7 +45,13 @@ Decisões já tomadas:
 | Natureza do sistema: avaliação assistida anônima com histórico | Sim — sem identificação do idoso, vínculo por dispositivo, histórico apagável | [ADR-0002](decisoes/ADR-0002-avaliacao-assistida-anonima.md) |
 | Licença | Proprietária | [LICENSE](../LICENSE) |
 | Idioma da documentação | Português (BR) | — |
-| Stack de frontend/backend e banco de dados | Pendente | ADR futuro |
+
+## Ambientes
+
+| Ambiente | Banco | Observações |
+|---|---|---|
+| Desenvolvimento | PostgreSQL local (recomendado: container Docker) | Migrations versionadas no repositório, idênticas às de produção |
+| Produção | Supabase (PostgreSQL gerenciado via connection string) | Sem uso de Auth/Storage/Realtime do Supabase |
 
 ## Restrições e requisitos transversais
 
