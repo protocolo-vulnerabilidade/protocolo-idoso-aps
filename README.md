@@ -1,21 +1,34 @@
 # Protocolo Idoso APS
 
-Sistema web de apoio à **identificação, estratificação e manejo da vulnerabilidade clínico-funcional e sociofamiliar da pessoa idosa** na Atenção Primária à Saúde (APS), baseado no protocolo assistencial MIV-CFS.
+Ferramenta web de **avaliação assistida da vulnerabilidade clínico-funcional e sociofamiliar da pessoa idosa** na Atenção Primária à Saúde (APS): aplicação dos instrumentos **IVCF-20** e **EASFI-BR** com cálculo automático da **Matriz Integrada de Vulnerabilidade (MIV-CFS)**.
 
 > **Status: fase de setup** — este repositório está em estruturação. Ainda não há código de aplicação; a stack do frontend e do backend será definida e registrada em ADR (ver [docs/arquitetura.md](docs/arquitetura.md)).
 
 ## Sobre o projeto
 
-O protocolo assistencial (elaborado pela equipe da Unoeste/Curso de Medicina, 2026) padroniza, no âmbito da Unidade Básica de Saúde (UBS), os processos de identificação, avaliação, estratificação, acompanhamento e manejo das pessoas idosas (≥ 60 anos) em situação de vulnerabilidade, por meio da combinação de dois instrumentos validados:
+O sistema apoia a equipe da UBS na estratificação da vulnerabilidade da pessoa idosa (≥ 60 anos), a partir do protocolo assistencial MIV-CFS (Unoeste/Curso de Medicina, 2026), que combina dois instrumentos validados:
 
 | Instrumento | Dimensão | Pontuação | Estratificação |
 |---|---|---|---|
 | **IVCF-20** | Clínico-funcional (8 domínios) | 0–40 | Baixo (0–6) · Moderado (7–14) · Alto (15–40) |
 | **EASFI-BR** | Sociofamiliar (5 domínios) | 5–25 | Adequada (5–9) · Risco social (10–14) · Problema social (≥ 15) |
 
-Os escores são cruzados na **Matriz Integrada de Vulnerabilidade (MIV-CFS)**, que classifica o idoso em **4 níveis de prioridade assistencial** — a condição social atua como modificador do nível de atenção, sem soma numérica direta. **Marcadores sociais sentinela** (violência, situação de rua, ausência de cuidador, entre outros) reclassificam diretamente para os níveis mais graves.
+Os escores são cruzados na **matriz MIV-CFS**, que classifica o idoso em **4 níveis de prioridade assistencial**; **marcadores sociais sentinela** reclassificam diretamente para os níveis mais graves.
 
-Detalhes completos em [docs/visao-geral.md](docs/visao-geral.md).
+### Como o sistema é usado
+
+1. O profissional **retoma um rascunho** ou inicia uma nova avaliação
+2. Preenche o **formulário assistido** com os dados nominais e numéricos dos instrumentos
+3. O sistema calcula os escores, cruza a **matriz MIV-CFS**, avalia os **marcadores sentinela** e apresenta o **nível de vulnerabilidade** com a conduta e o prazo de reavaliação recomendados
+4. O profissional **copia o resumo do resultado** para a ficha do idoso **no sistema oficial** da UBS
+5. O cálculo fica registrado no **histórico anônimo** do dispositivo — que pode ser consultado ou **apagado** a qualquer momento
+
+### Características centrais
+
+- **Anônimo por design** — nenhum dado de identificação da pessoa idosa é informado ou armazenado
+- **Rascunhos persistentes** — é possível sair da tela e voltar exatamente de onde parou
+- **Histórico gerenciável** — cálculos anteriores ficam guardados e podem ser abertos ou apagados (individualmente ou todos)
+- **Resumo copiável** — saída formatada para transferir o resultado à ficha no sistema oficial
 
 ## Estrutura do monorepo
 
@@ -31,7 +44,7 @@ protocolo-idoso-aps/
 │   └── decisoes/           # Registro de decisões (ADRs)
 └── apps/
     ├── frontend/           # Aplicação web (stack a definir)
-    └── backend/            # API e regras de negócio (stack a definir)
+    └── backend/            # API, regras de negócio e persistência (stack a definir)
 ```
 
 ## Documentação
@@ -43,9 +56,12 @@ protocolo-idoso-aps/
 | [docs/decisoes/](docs/decisoes/) | Histórico de decisões arquiteturais (ADRs) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribuir com o projeto |
 
-## Aviso de dados sensíveis
+## Privacidade e dados
 
-Este sistema trata **dados pessoais sensíveis de saúde** (dados de pessoas idosas). Todo desenvolvimento deve observar a **LGPD (Lei nº 13.709/2018)**, o Estatuto da Pessoa Idosa (Lei nº 10.741/2003) e as diretrizes do SUS aplicáveis. Veja [docs/visao-geral.md](docs/visao-geral.md#privacidade-e-lgpd).
+- O sistema é **anônimo por design**: nenhum campo de identificação da pessoa idosa (nome, nº de ficha, etc.) é coletado — a associação entre o resultado e a pessoa idosa permanece no sistema oficial da UBS
+- As respostas e resultados são armazenados **sem identificação**, vinculados a um **identificador de dispositivo** (sem contas de usuário)
+- O histórico é **apagável** pelo próprio usuário (direito de eliminação)
+- Consulte [docs/visao-geral.md](docs/visao-geral.md#privacidade-e-lgpd) para o tratamento completo de LGPD
 
 ## Contribuindo
 
