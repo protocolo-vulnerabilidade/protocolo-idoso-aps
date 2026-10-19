@@ -32,10 +32,9 @@ Sistema web cliente-servidor com fronteira clara entre apresentação (frontend)
 |---|---|---|
 | Frontend | React + Vite + TypeScript (estrito) + Tailwind CSS + shadcn/ui | [ADR-0003](decisoes/ADR-0003-stack-frontend.md) |
 | Backend | Go + API JSON REST + pgx com SQL explícito | [ADR-0004](decisoes/ADR-0004-stack-backend.md) |
+| Roteador HTTP do backend | `net/http` da biblioteca padrão (padrões do Go 1.22+) | [ADR-0006](decisoes/ADR-0006-roteador-http-stdlib.md) |
 | Banco | PostgreSQL — dev local (container) · produção no Supabase (apenas Postgres gerenciado) | [ADR-0005](decisoes/ADR-0005-banco-postgresql-supabase.md) |
 | Domínio | Regras MIV-CFS em pacotes Go puros, testáveis contra os casos do protocolo | ADR-0004 |
-
-**Ponto aberto**: framework/roteador HTTP do backend (Gin/Echo/chi) — a decidir na implementação e registrar em ADR próprio.
 
 Demais decisões institucionais:
 

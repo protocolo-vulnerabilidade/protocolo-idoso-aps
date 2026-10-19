@@ -17,7 +17,25 @@ Interface web do **Protocolo Idoso APS** — formulário assistido de avaliaçã
 
 ## Status
 
-**Pendente de implementação.**
+**Implementado.** Consome a API REST do backend (`apps/backend`) — o cálculo dos escores, da matriz MIV-CFS, das sentinelas e a geração do resumo copiável acontecem no servidor.
+
+- Cliente HTTP tipado em `src/lib/api.ts` (contrato mantido manualmente com o backend — ADR-0004); dados via **react-query** em `src/lib/armazenamento.ts`
+- O `localStorage` guarda apenas o identificador anônimo de dispositivo (`piaps:anon`), enviado no cabeçalho `X-Dispositivo-Id`
+- Auto-save do rascunho com debounce (~800 ms) durante o preenchimento
+
+## Como rodar (desenvolvimento)
+
+```powershell
+bun install
+bun run dev   # http://localhost:5173 — espera o backend em http://localhost:8080
+```
+
+A URL base da API pode ser sobrescrita com a variável `VITE_API_URL`.
+
+```powershell
+bun run test  # vitest
+bun run lint  # eslint
+```
 
 ## Documentação
 

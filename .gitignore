@@ -54,3 +54,6 @@ tmp/
 temp/
 *.pid
 *.seed
+
+# ---- Go ----
+*.exe
