@@ -12,6 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Deploy target: Vercel (overrides the config's default cloudflare-module preset)
+  nitro: { preset: "vercel" },
   vite: {
     server: { port: 5173 },
   },
