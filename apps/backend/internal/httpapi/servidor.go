@@ -1,10 +1,12 @@
 package httpapi
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,19 +14,37 @@ import (
 	"piaps/backend/internal/armazenamento"
 )
 
-type Servidor struct {
-	arm     armazenamento.Armazenamento
-	origens map[string]bool
+const (
+	maxErrosSenha   = 5
+	bloqueioDuracao = time.Minute
+)
+
+type tentativasSenha struct {
+	erros        int
+	bloqueadoAte time.Time
 }
 
-func NovoHandler(arm armazenamento.Armazenamento, origensPermitidas []string) http.Handler {
+type Servidor struct {
+	arm           armazenamento.Armazenamento
+	origens       map[string]bool
+	senhaExclusao string
+	mu            sync.Mutex
+	tentativas    map[string]*tentativasSenha
+}
+
+func NovoHandler(arm armazenamento.Armazenamento, origensPermitidas []string, senhaExclusao string) http.Handler {
 	origens := make(map[string]bool, len(origensPermitidas))
 	for _, o := range origensPermitidas {
 		if o != "" {
 			origens[o] = true
 		}
 	}
-	s := &Servidor{arm: arm, origens: origens}
+	s := &Servidor{
+		arm:           arm,
+		origens:       origens,
+		senhaExclusao: senhaExclusao,
+		tentativas:    make(map[string]*tentativasSenha),
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/saude", s.saude)
@@ -35,9 +55,9 @@ func NovoHandler(arm armazenamento.Armazenamento, origensPermitidas []string) ht
 	mux.HandleFunc("DELETE /api/rascunhos/{id}", s.exigirDispositivo(s.apagarRascunho))
 	mux.HandleFunc("POST /api/rascunhos/{id}/concluir", s.exigirDispositivo(s.concluir))
 	mux.HandleFunc("GET /api/historico", s.exigirDispositivo(s.listarHistorico))
-	mux.HandleFunc("DELETE /api/historico", s.exigirDispositivo(s.apagarHistorico))
+	mux.HandleFunc("DELETE /api/historico", s.exigirDispositivo(s.exigirSenha(s.apagarHistorico)))
 	mux.HandleFunc("GET /api/historico/{id}", s.exigirDispositivo(s.obterConcluida))
-	mux.HandleFunc("DELETE /api/historico/{id}", s.exigirDispositivo(s.apagarConcluida))
+	mux.HandleFunc("DELETE /api/historico/{id}", s.exigirDispositivo(s.exigirSenha(s.apagarConcluida)))
 	mux.HandleFunc("POST /api/historico/{id}/reabrir", s.exigirDispositivo(s.reabrir))
 
 	return s.cors(s.registrarLog(mux))
@@ -59,6 +79,37 @@ func (s *Servidor) exigirDispositivo(prox func(http.ResponseWriter, *http.Reques
 			return
 		}
 		prox(w, r, id)
+	}
+}
+
+func (s *Servidor) exigirSenha(prox func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request, string) {
+	return func(w http.ResponseWriter, r *http.Request, dispositivo string) {
+		s.mu.Lock()
+		reg := s.tentativas[dispositivo]
+		agora := time.Now()
+		if reg != nil && reg.bloqueadoAte.After(agora) {
+			s.mu.Unlock()
+			s.erro(w, http.StatusTooManyRequests, "muitas tentativas incorretas; aguarde um minuto e tente novamente")
+			return
+		}
+		senha := r.Header.Get("X-Senha-Exclusao")
+		if senha != "" && subtle.ConstantTimeCompare([]byte(senha), []byte(s.senhaExclusao)) == 1 {
+			delete(s.tentativas, dispositivo)
+			s.mu.Unlock()
+			prox(w, r, dispositivo)
+			return
+		}
+		if reg == nil {
+			reg = &tentativasSenha{}
+			s.tentativas[dispositivo] = reg
+		}
+		reg.erros++
+		if reg.erros >= maxErrosSenha {
+			reg.bloqueadoAte = agora.Add(bloqueioDuracao)
+			reg.erros = 0
+		}
+		s.mu.Unlock()
+		s.erro(w, http.StatusUnauthorized, "senha inválida")
 	}
 }
 
@@ -89,7 +140,7 @@ func (s *Servidor) cors(prox http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origem)
 			if r.Method == http.MethodOptions {
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Dispositivo-Id")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Dispositivo-Id, X-Senha-Exclusao")
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}

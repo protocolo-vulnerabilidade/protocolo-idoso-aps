@@ -21,6 +21,10 @@ func main() {
 	url := getenv("DATABASE_URL", "postgresql://piaps_dev:piaps_dev@localhost:5432/protocolo_idoso_dev")
 	porta := getenv("PORTA", "8080")
 	origens := separarCSV(getenv("CORS_ORIGENS", "http://localhost:5173,http://localhost:4173"))
+	senhaExclusao := os.Getenv("SENHA_EXCLUSAO")
+	if senhaExclusao == "" {
+		log.Fatal("SENHA_EXCLUSAO não configurada — defina a variável de ambiente para liberar a API (exclusão do histórico exige senha)")
+	}
 
 	ctx := context.Background()
 	pool, err := conectar(ctx, url)
@@ -35,7 +39,7 @@ func main() {
 	log.Print("migrações verificadas")
 
 	arm := armazenamento.NovoPostgres(pool)
-	handler := httpapi.NovoHandler(arm, origens)
+	handler := httpapi.NovoHandler(arm, origens, senhaExclusao)
 
 	srv := &http.Server{
 		Addr:              ":" + porta,

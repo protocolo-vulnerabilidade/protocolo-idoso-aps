@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Botao, Cartao, Pagina, corNivel } from "@/components/ui-base";
+import { DialogoSenhaExclusao } from "@/components/dialogo-senha";
 import { useApagarConcluida, useApagarHistorico, useHistorico } from "@/lib/armazenamento";
 import { NIVEIS } from "@/lib/protocolo";
 import { cn } from "@/lib/utils";
@@ -19,22 +21,46 @@ export const Route = createFileRoute("/historico")({
   component: Historico,
 });
 
+type AlvoExclusao = { tipo: "uma"; id: string } | { tipo: "tudo" } | null;
+
 function Historico() {
   const { data, isPending } = useHistorico();
   const apagar = useApagarConcluida();
   const apagarTudo = useApagarHistorico();
   const lista = data?.historico ?? [];
+  const [alvo, setAlvo] = useState<AlvoExclusao>(null);
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null);
+
+  const pendente = apagar.isPending || apagarTudo.isPending;
+
+  function confirmarExclusao(senha: string) {
+    if (!alvo) return;
+    setErroExclusao(null);
+    const callbacks = {
+      onSuccess: () => setAlvo(null),
+      onError: (erro: unknown) =>
+        setErroExclusao(erro instanceof Error ? erro.message : "não foi possível apagar"),
+    };
+    if (alvo.tipo === "uma") {
+      apagar.mutate({ id: alvo.id, senha }, callbacks);
+    } else {
+      apagarTudo.mutate(senha, callbacks);
+    }
+  }
+
+  function fecharDialogo() {
+    setAlvo(null);
+    setErroExclusao(null);
+  }
+
   return (
     <Pagina>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Histórico</h1>
         <Botao
           variante="perigo"
-          disabled={!lista.length || apagarTudo.isPending}
-          onClick={() =>
-            confirm("Apagar TODAS as avaliações do histórico? Esta ação não pode ser desfeita.") &&
-            apagarTudo.mutate(undefined)
-          }
+          disabled={!lista.length || pendente}
+          onClick={() => setAlvo({ tipo: "tudo" })}
         >
           Apagar tudo
         </Botao>
@@ -77,8 +103,8 @@ function Historico() {
               </Link>
               <Botao
                 variante="perigo"
-                disabled={apagar.isPending && apagar.variables === a.id}
-                onClick={() => confirm("Apagar esta avaliação?") && apagar.mutate(a.id)}
+                disabled={pendente}
+                onClick={() => setAlvo({ tipo: "uma", id: a.id })}
               >
                 Apagar
               </Botao>
@@ -86,6 +112,19 @@ function Historico() {
           </Cartao>
         ))}
       </div>
+      <DialogoSenhaExclusao
+        aberto={alvo !== null}
+        titulo={alvo?.tipo === "tudo" ? "Apagar todas as avaliações?" : "Apagar esta avaliação?"}
+        descricao={
+          alvo?.tipo === "tudo"
+            ? "Todas as avaliações concluídas neste dispositivo serão apagadas. Esta ação não pode ser desfeita."
+            : "A avaliação selecionada será apagada. Esta ação não pode ser desfeita."
+        }
+        pendente={pendente}
+        erro={erroExclusao}
+        onConfirmar={confirmarExclusao}
+        onFechar={fecharDialogo}
+      />
     </Pagina>
   );
 }

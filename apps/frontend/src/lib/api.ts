@@ -82,7 +82,15 @@ export const api = {
     }),
   listarHistorico: () => req<{ historico: Concluida[] }>("/api/historico"),
   obterConcluida: (id: string) => req<ConcluidaDetalhe>(`/api/historico/${id}`),
-  apagarConcluida: (id: string) => req<void>(`/api/historico/${id}`, { method: "DELETE" }),
+  apagarConcluida: (id: string, senha: string) =>
+    req<void>(`/api/historico/${id}`, {
+      method: "DELETE",
+      headers: { "X-Senha-Exclusao": senha },
+    }),
   reabrir: (id: string) => req<Rascunho>(`/api/historico/${id}/reabrir`, { method: "POST" }),
-  apagarHistorico: () => req<void>("/api/historico", { method: "DELETE" }),
+  apagarHistorico: (senha: string) =>
+    req<void>("/api/historico", {
+      method: "DELETE",
+      headers: { "X-Senha-Exclusao": senha },
+    }),
 };

@@ -3,7 +3,7 @@
 // O localStorage guarda somente esse identificador (ver lib/api.ts).
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "./api";
+import { api, ErroApi } from "./api";
 
 export type { Rascunho, Concluida, ConcluidaDetalhe } from "./api";
 
@@ -87,10 +87,17 @@ export function useReabrir() {
   });
 }
 
+// Não repetir tentativa quando a senha é rejeitada (401/429): cada tentativa
+// errada conta para o bloqueio anti-força-bruta do backend.
+const repetirSoErroServidor = (_i: number, erro: unknown) =>
+  !(erro instanceof ErroApi) || erro.status >= 500;
+
 export function useApagarConcluida() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: api.apagarConcluida,
+    mutationFn: (params: { id: string; senha: string }) =>
+      api.apagarConcluida(params.id, params.senha),
+    retry: repetirSoErroServidor,
     onSuccess: () => qc.invalidateQueries({ queryKey: historico }),
   });
 }
@@ -98,7 +105,8 @@ export function useApagarConcluida() {
 export function useApagarHistorico() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: api.apagarHistorico,
+    mutationFn: (senha: string) => api.apagarHistorico(senha),
+    retry: repetirSoErroServidor,
     onSuccess: () => qc.invalidateQueries({ queryKey: historico }),
   });
 }
