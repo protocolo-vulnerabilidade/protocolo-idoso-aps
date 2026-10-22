@@ -1,0 +1,92 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/frontend/**"
+      - "apps/backend/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+jobs:
+  filtro:
+    name: Detectar mudanças
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filtros.outputs.frontend }}
+      backend: ${{ steps.filtros.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filtros
+        with:
+          filters: |
+            frontend:
+              - 'apps/frontend/**'
+            backend:
+              - 'apps/backend/**'
+
+  frontend:
+    name: Frontend — Vercel
+    needs: filtro
+    if: github.event_name == 'workflow_dispatch' || needs.filtro.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Deploy de produção
+        working-directory: apps/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+
+  backend:
+    name: Backend — Render
+    needs: filtro
+    if: github.event_name == 'workflow_dispatch' || needs.filtro.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
+    steps:
+      - name: Disparar deploy e aguardar ficar live
+        run: |
+          set -euo pipefail
+          deploy_id=$(curl -sf -X POST \
+            "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"commit\":{\"id\":\"${GITHUB_SHA}\"}}" \
+            | jq -r '.id')
+          echo "Deploy Render: ${deploy_id} (commit ${GITHUB_SHA:0:7})"
+          for i in $(seq 1 40); do
+            sleep 15
+            status=$(curl -sf \
+              "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys/${deploy_id}" \
+              -H "Authorization: Bearer ${RENDER_API_KEY}" \
+              | jq -r '.status')
+            echo "[${i}] status: ${status}"
+            case "${status}" in
+              live)
+                echo "Backend live"
+                exit 0
+                ;;
+              build_failed|update_failed|canceled|error)
+                echo "Deploy falhou: ${status}"
+                exit 1
+                ;;
+            esac
+          done
+          echo "Timeout aguardando deploy ficar live"
+          exit 1
